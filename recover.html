@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>데이터 복구</title>
+<style>
+body{font-family:-apple-system,sans-serif;background:#0A0C14;color:#fff;padding:24px;text-align:center}
+h1{font-size:18px;margin-bottom:20px}
+.btn{display:block;width:100%;max-width:320px;margin:10px auto;padding:16px;border-radius:12px;border:none;font-size:16px;font-weight:700;cursor:pointer}
+.scan{background:#3D7EFF;color:#fff}
+.dl{background:#00C48C;color:#fff}
+.result{background:#1A1D2E;border-radius:12px;padding:16px;margin:16px auto;max-width:420px;text-align:left;font-size:13px;white-space:pre-wrap;word-break:break-all;max-height:300px;overflow:auto}
+.key-found{color:#00C48C;font-weight:700}
+.key-missing{color:#FF6B6B}
+</style>
+</head>
+<body>
+<h1>🔍 예전 가계부 데이터 찾기</h1>
+<button class="btn scan" onclick="scan()">데이터 검색하기</button>
+<div id="output"></div>
+
+<script>
+const POSSIBLE_KEYS = ['kakeibo7','kakeibo6','kakeibo5','kakeibo4','kakeibo3','kakeibo2','kakeibo','kakeibo8'];
+let foundKey = null;
+let foundData = null;
+
+function scan(){
+  const out = document.getElementById('output');
+  let html = '<div class="result">';
+  let any = false;
+  POSSIBLE_KEYS.forEach(k => {
+    const v = localStorage.getItem(k);
+    if(v){
+      any = true;
+      foundKey = k;
+      foundData = v;
+      html += `<div class="key-found">✅ 발견: ${k} (${(v.length/1024).toFixed(1)}KB)</div>`;
+    } else {
+      html += `<div class="key-missing">❌ 없음: ${k}</div>`;
+    }
+  });
+  html += '</div>';
+  out.innerHTML = html;
+
+  if(foundData){
+    out.innerHTML += '<button class="btn dl" onclick="downloadData()">⬇️ 발견된 데이터 다운로드</button>';
+    out.innerHTML += '<div class="result">' + foundData.substring(0,2000) + (foundData.length>2000?'...(더 있음)':'') + '</div>';
+  } else {
+    out.innerHTML += '<div style="color:#FFB800;margin-top:16px">localStorage에서 가계부 데이터를 찾지 못했어요. 다른 브라우저로 입력하셨을 수 있어요.</div>';
+  }
+}
+
+function downloadData(){
+  const blob = new Blob([foundData], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `가계부_복구_${foundKey}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
